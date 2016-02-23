@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -14,19 +15,21 @@ func New(orig http.Handler) http.Handler {
 		parts := []string{"curl", "-v", "-X", r.Method}
 
 		for k, v := range r.Header {
-			parts = append(parts, "-H", fmt.Sprintf("%s: %s", k, strings.Join(v, ",")))
+			ck := http.CanonicalHeaderKey(k)
+			if ck != "Host" && ck != "User-Agent" {
+				parts = append(parts, "-H", fmt.Sprintf("'%s: %s'", k, strings.Join(v, ",")))
+			}
 		}
 
 		if r.Method == "POST" || r.Method == "PATCH" || r.Method == "PUT" {
-			cts := strings.Split(r.Header.Get("Content-Type"), ";")
-			var ct string
-			if len(cts) > 0 {
-				ct = cts[0]
+			b, err := ioutil.ReadAll(r.Body)
+
+			if err != nil {
+				log.Println("curler:", err)
 			}
-			if strings.HasSuffix(ct, "json") {
-				b, _ := ioutil.ReadAll(r.Body)
+			if err == nil && len(b) > 0 {
 				r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
-				parts = append(parts, "-d", string(b))
+				parts = append(parts, "-d '", string(b)+"'")
 			}
 		}
 
