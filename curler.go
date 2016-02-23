@@ -32,11 +32,12 @@ func New(orig http.Handler, out io.Writer) http.Handler {
 				parts = append(parts, "-d '", string(b)+"'")
 			}
 		}
+
 		scheme := "http"
 		if r.TLS != nil {
 			scheme += "s"
 		}
-		fmt.Println("host:", r.Host, "proto:", r.Proto, "scheme:", r.TLS != nil)
+
 		parts = append(parts, scheme+"://"+r.Host+r.URL.String())
 		fmt.Fprintln(out, strings.Join(parts, " "))
 		orig.ServeHTTP(rw, r)
