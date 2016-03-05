@@ -17,7 +17,10 @@ func New(orig http.Handler, out io.Writer) http.Handler {
 		for k, v := range r.Header {
 			ck := http.CanonicalHeaderKey(k)
 			if ck != "Host" && ck != "User-Agent" {
-				parts = append(parts, "-H", fmt.Sprintf("'%s: %s'", k, strings.Join(v, ",")))
+				for _, vv := range v {
+					parts = append(parts, "-H", fmt.Sprintf("'%s: %s'", k, vv))
+				}
+
 			}
 		}
 
